@@ -1430,23 +1430,24 @@ public class Vala.Genie.Scanner {
 		return new_lines;
 	}
 
+	/** Skips general comments, pushes file and doc comments.
+	 */
 	bool comment (bool file_comment = false) {
-		if (current == null
-			|| current > end - 2
-			|| current[0] != '/'
-			|| (current[1] != '/' && current[1] != '*')) {
+
+		if ( (current == null)
+			|| (current > (end - 2))
+			|| ((current[0] != '/') && (current[1] != '/'))
+			|| ((current[0] != '/') && (current[1] != '*')) ) {
 			return false;
 		}
 
+		if (current[1] == '/') {    // single-line comment
 
-		if (current[1] == '/') {
-			// single-line comment
-			
 			SourceReference source_reference = null;
 			if (file_comment) {
 				source_reference = get_source_reference (0);
 			}
-			
+
 			current += 2;
 
 			// skip until end of line or end of file
@@ -1454,34 +1455,27 @@ public class Vala.Genie.Scanner {
 				current++;
 			}
 
-			/* do not ignore EOL if comment does not exclusively occupy the line */
-			if (current[0] == '\n' && last_token == TokenType.EOL) {
-				current++;
-				line++;
-				column = 1;
-				current_indent_level = 0;
-			}
-			
 			if (source_reference != null) {
 				push_comment (((string) begin).substring (0, (long) (current - begin)), source_reference, file_comment);
 			}
-			
-		} else {
-			// delimited comment
+
+		}
+		else {    // multiline comment
+
 			SourceReference source_reference = null;
-			if (file_comment && current[2] == '*') {
+			if (file_comment && current[2] == '*') {    // comments in start of file: /* */
 				return false;
 			}
 
-			if (current[2] == '*' || file_comment) {
+			if (current[2] == '*' || file_comment) {    // doc comments: /** */
 				source_reference = get_source_reference (0);
 			}
 
 			current += 2;
 			char* begin = current;
 
-			while (current < end - 1
-				   && (current[0] != '*' || current[1] != '/')) {
+			while ( (current < end - 1) &&
+					(current[0] != '*' || current[1] != '/') ) {
 				if (current[0] == '\n') {
 					line++;
 					column = 0;
@@ -1513,14 +1507,13 @@ public class Vala.Genie.Scanner {
 			column++;
 			found = true;
 		}
-		
+
 		return found;
 	}
 
 	void skip_space_tabs () {
 		while (whitespace () || skip_tabs () || comment () ) {
 		}
-	
 	}
 
 	void space () {
@@ -1531,7 +1524,6 @@ public class Vala.Genie.Scanner {
 	public void parse_file_comments () {
 		while (whitespace () || comment (true)) {
 		}
-		
 	}
 
 	void push_comment (string comment_item, SourceReference source_reference, bool file_comment) {
