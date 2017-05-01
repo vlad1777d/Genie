@@ -4,16 +4,21 @@ Place this file in the root of valac's sources.
 Tests directory must be subdirectory to it.
 
 Failed tests are saved to tests + ./failed folder.
+
+It can be used only with Python 3.6 - here are used formatted strings.
+
+Please, configure next variables (before imports) before running it.
 """
 
 
 # pathes can be relative this file's path.
 # Configure variables in this block:
 
-compiler_path = "/home/vlad/Programs/programming/languages/Vala_Genie/valac/installed_v4/bin/valac-0.38"  # valac.
+compiler_path = "/home/vlad/Programs/programming/languages/Vala_Genie/valac/installed_v4/bin/valac"  # valac.
 directories_with_tests = ["./tests"]  # will go across them recursively
 place_for_failed_tests_binaries = "./tests/_failed"
-use_dependencies = ["gee-0.8"] #"gio-2.0" # ["glib-2.0", "gdk-3.0", "librsvg-2.0", "gtk+-3.0", "cairo", "gee-0.8"]
+use_dependencies = ["gee-0.8", "libvala-0.38"]
+# ["glib-2.0", "gio-2.0", "gdk-3.0", "librsvg-2.0", "gtk+-3.0", "cairo", "gee-0.8"]
 possible_extensions = [".gs"] # only files with this extensions will be proceeded
 
 
@@ -28,6 +33,10 @@ cur_file_dir = os.path.dirname (__file__)
 tests_base_dir = ""  # will change while going across "directories_with_tests"
 tests_passed = 0
 tests_failed = 0
+color_blue = "\x1b[34m"  # for painting in terminal
+color_green = "\x1b[32m"
+color_red = "\x1b[31m"
+color_reset = "\x1b[0m"
 
 
 
@@ -48,7 +57,7 @@ def run_tests():
 	
 	print ("")
 	print (f"Totally ran {tests_passed + tests_failed} tests.")
-	print (f"Passed: {tests_passed};    Failed: {tests_failed}.")
+	print (f"{color_green}Passed: {tests_passed};    {color_red}Failed: {tests_failed}.{color_reset}")
 	print ("")
 
 
@@ -107,7 +116,7 @@ def build_test_bin (command, test_name):
 	"""
 	proc = sub.run([x1 for x1 in command.split (' ') if x1],  # to remove empty arguments
 		stdout=sub.PIPE, stderr=sub.PIPE, shell=False, encoding="utf8")
-	output = proc.stdout + "\n" + proc.stderr
+	output = proc.stdout + "\n" + proc.stderr + "\n" + proc.stdout  # stdout - errors amount; stderr - errors text
 	
 	if proc.returncode == 0:
 		error = False
@@ -138,21 +147,15 @@ def print_result(result, test_name):
 	"""In:
 		result, returned by build_test_bin (), run_test_bin ()
 		result = {'error':error, 'output':output, 'when':'when failed'}
-	"""
-	color_blue = "\x1b[34m"
-	color_green = "\x1b[32m"
-	color_red = "\x1b[31m"
-	color_reset = "\x1b[0m"
-	
+	"""	
 	print ("")
 	if not result['error']:
 		print (f"{color_green}OK{color_reset}        ({test_name} {color_green}passed{color_reset})")
 	else:
-		print (f"{color_red}FAILED{color_reset}        ({test_name} {color_red}failed {result['when']}{color_reset})")
+		print (f"{color_red}FAILED{color_reset}    ({test_name} {color_red}failed {result['when']}{color_reset})")
 		
 		print ("")
 		result['output'] = result['output'].replace ("error", f"{color_red}error{color_reset}")
-		result['output'] = result['output'].replace (test_name, f"{color_blue}"+test_name+f"{color_reset}")
 		result['output'] = result['output'].replace ("^", f"{color_red}^{color_reset}")
 		
 		print (result['output'])  # it'll be printed itself into stdout
