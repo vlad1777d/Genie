@@ -1436,10 +1436,10 @@ public class Vala.Genie.Scanner {
 	 */
 	bool comment (bool file_comment = false) {
 
-		if ( (current == null)
-			|| (current > (end - 2))
-			|| ((current[0] != '/') && (current[1] != '/'))
-			|| ((current[0] != '/') && (current[1] != '*')) ) {
+		if (current == null
+			|| current > end - 2
+			|| current[0] != '/'
+			|| (current[1] != '/' && current[1] != '*')) {
 			return false;
 		}
 
