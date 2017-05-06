@@ -1,11 +1,11 @@
-#! /usr/bin/python3.6
+#! /usr/bin/python3
 """
 Place this file in the root of valac's sources.
 Tests directory must be subdirectory to it.
 
 Failed tests are saved to tests + ./failed folder.
 
-It can be used only with Python 3.6 - here are used formatted strings.
+It can be used only with Python 3.
 
 Please, configure next variables (before imports) before running it.
 """
@@ -56,8 +56,12 @@ def run_tests():
 				run_test (cur_file)
 	
 	print ("")
-	print (f"Totally ran {tests_passed + tests_failed} tests.")
-	print (f"{color_green}Passed: {tests_passed};    {color_red}Failed: {tests_failed}.{color_reset}")
+	totally_tests = tests_passed + tests_failed
+	print ("Totally ran {totally_tests} tests.".format(totally_tests=totally_tests))
+	print ("{color_green}Passed: {tests_passed};    {color_red}Failed: {tests_failed}.{color_reset}".format(
+			color_green=color_green, tests_passed=tests_passed,
+			tests_failed=tests_failed, color_reset=color_reset,
+			color_red=color_red))
 	print ("")
 
 
@@ -100,8 +104,8 @@ def run_test_bin (test_bin_path, test_name):
 	"""returns: {'error':True, 'output':"text"}
 	"""
 	
-	proc = sub.run(f"{test_bin_path}", stdout=sub.PIPE, stderr=sub.PIPE, encoding="utf8")
-	output = proc.stdout
+	proc = sub.run("{test_bin_path}".format(test_bin_path=test_bin_path), stdout=sub.PIPE, stderr=sub.PIPE)
+	output = str(proc.stdout, encoding='utf-8')
 	
 	if proc.returncode == 0:
 		error = False
@@ -115,8 +119,10 @@ def build_test_bin (command, test_name):
 	"""Runs build command in other process.
 	"""
 	proc = sub.run([x1 for x1 in command.split (' ') if x1],  # to remove empty arguments
-		stdout=sub.PIPE, stderr=sub.PIPE, shell=False, encoding="utf8")
-	output = proc.stdout + "\n" + proc.stderr + "\n" + proc.stdout  # stdout - errors amount; stderr - errors text
+		stdout=sub.PIPE, stderr=sub.PIPE, shell=False)
+	output = (str(proc.stdout, encoding='utf-8') + "\n" +
+			str(proc.stderr, encoding='utf-8') + "\n" +
+			str(proc.stdout, encoding='utf-8'))  # stdout - errors amount; stderr - errors text
 	
 	if proc.returncode == 0:
 		error = False
@@ -138,7 +144,9 @@ def form_build_command (test_src_path):
 			test_bin_path = test_src_path [0: - len(ext)]
 	output = "--output=" + test_bin_path
 	
-	command = f"{compiler_path} {packages} {test_src_path} {output}"
+	command = "{compiler_path} {packages} {test_src_path} {output}".format(
+			compiler_path=compiler_path, packages=packages,
+			test_src_path=test_src_path, output=output)
 	
 	return command, test_bin_path
 
@@ -150,13 +158,20 @@ def print_result(result, test_name):
 	"""	
 	print ("")
 	if not result['error']:
-		print (f"{color_green}OK{color_reset}        ({test_name} {color_green}passed{color_reset})")
+		print ("{color_green}OK{color_reset}        ({test_name} {color_green}passed{color_reset})".format(
+				color_green=color_green, color_reset=color_reset,
+				test_name=test_name))
 	else:
-		print (f"{color_red}FAILED{color_reset}    ({test_name} {color_red}failed {result['when']}{color_reset})")
+		result_when = result['when']
+		print ("{color_red}FAILED{color_reset}    ({test_name} {color_red}failed {result_when}{color_reset})".format(
+				color_red=color_red, color_reset=color_reset,
+				test_name=test_name, result_when=result_when))
 		
 		print ("")
-		result['output'] = result['output'].replace ("error", f"{color_red}error{color_reset}")
-		result['output'] = result['output'].replace ("^", f"{color_red}^{color_reset}")
+		result['output'] = result['output'].replace ("error", "{color_red}error{color_reset}".format(
+				color_red=color_red, color_reset=color_reset))
+		result['output'] = result['output'].replace ("^", "{color_red}^{color_reset}".format(
+				color_red=color_red, color_reset=color_reset))
 		
 		print (result['output'])  # it'll be printed itself into stdout
 
@@ -167,7 +182,7 @@ def receive_abs_path_from_relative (rel_path):  # path must be relative to this 
 	if os.path.exists(abs_path):
 		return abs_path
 	else:
-		raise FileNotFoundError (f"Such directory is absent: {abs_path}")
+		raise FileNotFoundError ("Such directory is absent: {abs_path}".format(abs_path=abs_path))
 
 
 def receive_subdirectories_recursively (main_path):
