@@ -2126,10 +2126,12 @@ public class Vala.Genie.Parser : CodeVisitor {
 		Expression initializer = null;
 		Expression condition = null;
 		Expression iterator = null;
-		Expression int_start_expr = null;    // for dynamic analysis
+		// for dynamic analysis:
+		Expression int_start_expr = null;
 		bool is_expr;
 		string id;
-		int int_amount = 0;    // for static analysis
+		// for static analysis:
+		int int_amount = 0;
 		int int_start = 0;
 		int int_end = 0;
 
@@ -2173,7 +2175,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 		}
 
 		prev ();
-		if (accept (TokenType.INTEGER_LITERAL)) {    // for static analysis
+		if (accept (TokenType.INTEGER_LITERAL)) {
+			// (for static analysis)
 			int_start = int.parse (get_last_string());
 			int_amount += 1;
 			prev ();
@@ -2205,7 +2208,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 			/* create expression for condition and decrementing iterator */
 			var left = new MemberAccess (null, id, ellipsis_src_ref);
 			Expression right = null;
-			if (accept (TokenType.INTEGER_LITERAL)) {    // for static analysis
+			if (accept (TokenType.INTEGER_LITERAL)) {
+				// (for static analysis)
 				prev ();
 				right = parse_primary_expression ();
 				int_end = int.parse (get_last_string());
@@ -2214,7 +2218,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 				right = parse_primary_expression ();
 			}
 
-			if (int_amount >= 2) {    // static analysis attempt
+			if (int_amount >= 2) {
+				// static analysis attempt:
 				if (int_start <= int_end) {
 					condition = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, left, right, ellipsis_src_ref);
 					iterator = new PostfixExpression (left, true, ellipsis_src_ref);
@@ -2222,7 +2227,9 @@ public class Vala.Genie.Parser : CodeVisitor {
 					condition = new BinaryExpression (BinaryOperator.GREATER_THAN_OR_EQUAL, left, right, ellipsis_src_ref);
 					iterator = new PostfixExpression (left, false, ellipsis_src_ref);
 				}
-			} else {    // dynamic analysis
+			}
+			else {
+				// dynamic analysis:
 				var first_lesser_second = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, int_start_expr, right, ellipsis_src_ref);
 
 				var condition_if_increasing = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, left, right, ellipsis_src_ref);
@@ -2299,23 +2306,31 @@ public class Vala.Genie.Parser : CodeVisitor {
 		SourceReference variable_src = null;
 		DataType variable_type = null;
 		string variable_id = null;
-		int int_amount = 0;    // for static analysis
-		int to_downto_dots = 1;    // to -> 1; downto -> -1; three dots -> 0
-		int int_start = 0;    // for static check
-		int int_end = 0;    // just declaration, it'll change later
+		// for static analysis:
+		int int_amount = 0;
+		int to_downto_dots = 1;
+		// (to -> 1; downto -> -1; three dots -> 0)
+		// for static analysis:
+		int int_start = 0;
+		// just declaration, it'll change later:
+		int int_end = 0;
 		Expression int_start_expr = null;
 		Expression int_end_expr = null;
 		var block = new Block (get_src (begin));
 
+		// default value:
 		var int_type_symbol = new UnresolvedSymbol (null, "int", get_src (begin));
-		variable_type = new UnresolvedType.from_symbol (int_type_symbol, get_src (begin));  // default value
+		variable_type = new UnresolvedType.from_symbol (int_type_symbol, get_src (begin));
 
 		if (accept (TokenType.VAR)) {
 			variable_src = get_src ( get_location () );
-			variable = parse_primary_expression ();    // uses  parse_simple_name (); for simple names, returns MemberAccess
+			variable = parse_primary_expression ();
+			// (uses  parse_simple_name (); for simple names, returns MemberAccess)
 			variable_id = get_last_string ();
-		} else {
-			variable_src = get_src ( get_location () );    // needed to build initializer
+		}
+		else {
+			variable_src = get_src ( get_location () );
+			// (needed to build initializer)
 			variable = parse_primary_expression ();
 			variable_id = get_last_string ();
 			if (accept (TokenType.COLON)) {
@@ -2325,7 +2340,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 
 		expect (TokenType.IN);
 
-		var before_int = get_location ();    // int_start
+		// int_start:
+		var before_int = get_location ();
 		if ( accept (TokenType.INTEGER_LITERAL) ) {
 			rollback (before_int);
 			int_start_expr = parse_primary_expression ();
@@ -2347,7 +2363,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 			to_downto_dots = 0;
 		}
 
-		before_int = get_location ();    // int_end
+		// int_end:
+		before_int = get_location ();
 		if ( accept (TokenType.INTEGER_LITERAL) ) {
 			rollback (before_int);
 			int_end_expr = parse_primary_expression ();
@@ -2358,13 +2375,17 @@ public class Vala.Genie.Parser : CodeVisitor {
 		}
 
 		if (to_downto_dots == 1) {
-			condition = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, variable, int_end_expr, to_src);
-			iterator = new PostfixExpression (variable, true, to_src);
-		} else if (to_downto_dots == -1) {
-			condition = new BinaryExpression (BinaryOperator.GREATER_THAN_OR_EQUAL, variable, int_end_expr, to_src);
-			iterator = new PostfixExpression (variable, false, to_src);
-		} else {    // to_downto_dots == 0
-			if (int_amount >= 2) {    // static analysis attempt
+			condition = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, variable, int_end_expr, to_src_ref);
+			iterator = new PostfixExpression (variable, true, to_src_ref);
+		}
+		else if (to_downto_dots == -1) {
+			condition = new BinaryExpression (BinaryOperator.GREATER_THAN_OR_EQUAL, variable, int_end_expr, to_src_ref);
+			iterator = new PostfixExpression (variable, false, to_src_ref);
+		}
+		else {
+			// (when to_downto_dots == 0)
+			if (int_amount >= 2) {
+				// static analysis attempt:
 				if (int_start <= int_end) {
 					condition = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, variable, int_end_expr, to_src);
 					iterator = new PostfixExpression (variable, true, to_src);
@@ -2372,8 +2393,10 @@ public class Vala.Genie.Parser : CodeVisitor {
 					condition = new BinaryExpression (BinaryOperator.GREATER_THAN_OR_EQUAL, variable, int_end_expr, to_src);
 					iterator = new PostfixExpression (variable, false, to_src);
 				}
-			} else {    // dynamic analysis
-				var first_lesser_second = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, int_start_expr, int_end_expr, to_src);
+			}
+			else {
+				// dynamic analysis:
+				var first_lesser_second = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, int_start_expr, int_end_expr, to_src_ref);
 
 				var condition_if_increasing = new BinaryExpression (BinaryOperator.LESS_THAN_OR_EQUAL, variable, int_end_expr, to_src);
 				var condition_if_decreasing = new BinaryExpression (BinaryOperator.GREATER_THAN_OR_EQUAL, variable, int_end_expr, to_src);
@@ -2386,7 +2409,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 		}
 
 		initializer = new Assignment (variable, int_start_expr, AssignmentOperator.SIMPLE, variable_src);
-		var initializer_2 = new MemberInitializer(variable_id, initializer);    // hack: this instead of "initializer" corrected error
+		// hack: this instead of "initializer" corrected error:
+		var initializer_2 = new MemberInitializer(variable_id, initializer);
 		var variable_class = new LocalVariable (variable_type.copy(), variable_id, initializer_2 as Expression, get_src (begin) );
 		block.add_statement (new DeclarationStatement (variable_class, variable_class.source_reference));
 
@@ -4082,4 +4106,3 @@ public class Vala.Genie.Parser : CodeVisitor {
 		return expr;
 	}
 }
-

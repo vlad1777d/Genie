@@ -34,14 +34,14 @@ public class Vala.Genie.Scanner {
 	char* begin;
 	char* current;
 	char* end;
-	
+
 	int line;
 	int column;
 
 	int current_indent_level;
 	int indent_level;
 	int pending_dedents;
-	
+
 	/* track open parens and braces for automatic line continuations */
 	int open_parens_count;
 	int open_brace_count;
@@ -50,7 +50,7 @@ public class Vala.Genie.Scanner {
 	bool parse_started;
 
 	Comment _comment;
-	
+
 	Conditional[] conditional_stack;
 
 	struct Conditional {
@@ -69,7 +69,7 @@ public class Vala.Genie.Scanner {
 		TEMPLATE,
 		TEMPLATE_PART
 	}
-	
+
 	public Scanner (SourceFile source_file) {
 		this.source_file = source_file;
 
@@ -84,13 +84,13 @@ public class Vala.Genie.Scanner {
 		current_indent_level = 0;
 		indent_level = 0;
 		pending_dedents = 0;
-		
+
 		open_parens_count = 0;
 		open_brace_count = 0;
 
 		parse_started = false;
 		last_token = TokenType.NONE;
-		
+
 	}
 
 	bool in_template () {
@@ -104,7 +104,7 @@ public class Vala.Genie.Scanner {
 	bool is_ident_char (char c) {
 		return (c.isalnum () || c == '_');
 	}
-	
+
 	bool in_regex_literal () {
 		return (state_stack.length > 0 && state_stack[state_stack.length - 1] == State.REGEX_LITERAL);
 	}
@@ -273,7 +273,7 @@ public class Vala.Genie.Scanner {
 		return type;
 	}
 
-	
+
 	public void seek (SourceLocation location) {
 		current = location.pos;
 		line = location.line;
@@ -305,7 +305,7 @@ public class Vala.Genie.Scanner {
 				break;
 			case 'o':
 				if (matches (begin, "of")) return TokenType.OF;
-				
+
 				if (matches (begin, "or")) return TokenType.OP_OR;
 				break;
 			case 't':
@@ -388,7 +388,7 @@ public class Vala.Genie.Scanner {
 					break;
 				}
 				break;
-				
+
 			case 'n':
 				if (matches (begin, "null")) return TokenType.NULL;
 				break;
@@ -659,7 +659,7 @@ public class Vala.Genie.Scanner {
 		return TokenType.IDENTIFIER;
 	}
 
-	
+
 	public TokenType read_template_token (out SourceLocation token_begin, out SourceLocation token_end) {
 		TokenType type;
 		char* begin = current;
@@ -677,7 +677,8 @@ public class Vala.Genie.Scanner {
 				state_stack.length--;
 				break;
 			case '$':
-				token_begin.pos++; // $ is not part of following token
+				token_begin.pos++;
+				// $ is not part of following token
 				current++;
 				if (current[0].isalpha () || current[0] == '_') {
 					int len = 0;
@@ -816,22 +817,22 @@ public class Vala.Genie.Scanner {
 			/* scrub whitespace (excluding newlines) and comments */
 			space ();
 		}
-		
-		
+
+
 		/* handle explicit line continuation (lines ending with "\") */
 		while (current < end && current[0] == '\\' && current[1] == '\n') {
 			current += 2;
 			line++;
 			skip_space_tabs ();
 		}
-		
+
 		/* handle automatic line continuations (when inside parens or braces) */
 		while (current < end && current[0] == '\n' && (open_parens_count > 0 || open_brace_count > 0)) {
 			current++;
 			line++;
 			skip_space_tabs ();
 		}
-		
+
 
 		/* handle non-consecutive new line once parsing is underway - EOL */
 		if (newline () && parse_started && last_token != TokenType.EOL && last_token != TokenType.SEMICOLON) {
@@ -905,7 +906,8 @@ public class Vala.Genie.Scanner {
 				current += 2;
 				state_stack += State.TEMPLATE;
 			} else {
-				token_begin.pos++; // @ is not part of the identifier
+				token_begin.pos++;
+				// @ is not part of the identifier
 				current++;
 				int len = 0;
 				while (current < end && is_ident_char (current[0])) {
@@ -1347,7 +1349,7 @@ public class Vala.Genie.Scanner {
 
 	int count_tabs ()
 	{
-		
+
 		int tab_count = 0;
 
 
@@ -1364,9 +1366,9 @@ public class Vala.Genie.Scanner {
 				column++;
 				space_count++;
 			}
-			
+
 			tab_count = space_count / _indent_spaces;
-		
+
 		}
 
 		/* ignore comments and whitspace and other lines that contain no code */
@@ -1392,17 +1394,17 @@ public class Vala.Genie.Scanner {
 	bool whitespace () {
 		bool found = false;
 		while (current < end && current[0].isspace () && current[0] != '\n' ) {
-			
+
 			found = true;
 			current++;
 			column++;
 		}
-		
+
 		if ((column == 1) && (current < end) && (current[0] == '#')) {
 			pp_directive ();
 			return true;
 		}
-		
+
 		return found;
 	}
 
@@ -1438,15 +1440,14 @@ public class Vala.Genie.Scanner {
 			return false;
 		}
 
-
 		if (current[1] == '/') {
 			// single-line comment
-			
+
 			SourceReference source_reference = null;
 			if (file_comment) {
 				source_reference = get_source_reference (0);
 			}
-			
+
 			current += 2;
 
 			// skip until end of line or end of file
@@ -1457,14 +1458,19 @@ public class Vala.Genie.Scanner {
 			if (source_reference != null) {
 				push_comment (((string) begin).substring (0, (long) (current - begin)), source_reference, file_comment);
 			}
-			
-		} else {
-			// delimited comment
+
+		}
+		else {
+			// multiline comment
+
 			SourceReference source_reference = null;
+
+			// comments in start of file: /* */
 			if (file_comment && current[2] == '*') {
 				return false;
 			}
 
+			// doc comments: /** */
 			if (current[2] == '*' || file_comment) {
 				source_reference = get_source_reference (0);
 			}
@@ -1505,14 +1511,14 @@ public class Vala.Genie.Scanner {
 			column++;
 			found = true;
 		}
-		
+
 		return found;
 	}
 
 	void skip_space_tabs () {
 		while (whitespace () || skip_tabs () || comment () ) {
 		}
-	
+
 	}
 
 	void space () {
@@ -1523,7 +1529,7 @@ public class Vala.Genie.Scanner {
 	public void parse_file_comments () {
 		while (whitespace () || comment (true)) {
 		}
-		
+
 	}
 
 	void push_comment (string comment_item, SourceReference source_reference, bool file_comment) {
@@ -1814,4 +1820,3 @@ public class Vala.Genie.Scanner {
 		return parse_pp_or_expression ();
 	}
 }
-
