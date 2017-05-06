@@ -677,7 +677,8 @@ public class Vala.Genie.Scanner {
 				state_stack.length--;
 				break;
 			case '$':
-				token_begin.pos++; // $ is not part of following token
+				token_begin.pos++;
+				// $ is not part of following token
 				current++;
 				if (current[0].isalpha () || current[0] == '_') {
 					int len = 0;
@@ -905,7 +906,8 @@ public class Vala.Genie.Scanner {
 				current += 2;
 				state_stack += State.TEMPLATE;
 			} else {
-				token_begin.pos++; // @ is not part of the identifier
+				token_begin.pos++;
+				// @ is not part of the identifier
 				current++;
 				int len = 0;
 				while (current < end && is_ident_char (current[0])) {
@@ -1441,7 +1443,8 @@ public class Vala.Genie.Scanner {
 			return false;
 		}
 
-		if (current[1] == '/') {    // single-line comment
+		if (current[1] == '/') {
+			// single-line comment
 
 			SourceReference source_reference = null;
 			if (file_comment) {
@@ -1460,14 +1463,18 @@ public class Vala.Genie.Scanner {
 			}
 
 		}
-		else {    // multiline comment
+		else {
+			// multiline comment
 
 			SourceReference source_reference = null;
-			if (file_comment && current[2] == '*') {    // comments in start of file: /* */
+			
+			// comments in start of file: /* */
+			if (file_comment && current[2] == '*') {
 				return false;
 			}
 
-			if (current[2] == '*' || file_comment) {    // doc comments: /** */
+			// doc comments: /** */
+			if (current[2] == '*' || file_comment) {
 				source_reference = get_source_reference (0);
 			}
 
