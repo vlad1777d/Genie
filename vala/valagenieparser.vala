@@ -3643,23 +3643,34 @@ public class Vala.Genie.Parser : CodeVisitor {
 				// allow trailing comma
 				break;
 			}
-			var value_attrs = parse_attributes (false);
-			var value_begin = get_location (); 
-			string id = parse_identifier ();
-			comment = scanner.pop_comment ();
-
-			Expression value = null;
-			if (accept (TokenType.ASSIGN)) {
-				value = parse_expression ();
+			if (current () == TokenType.DEF) {
+				// enum methods
+				if ((tokens[index - 1].type != TokenType.EOL) && (tokens[index - 1].type != TokenType.DEDENT)) {
+					Report.error (get_src (get_location ()), "method definition must start from new line");
+				}
+				var en_method = parse_declaration ();
+				en.add_method (en_method as Method);
 			}
+			else {
+				// values
+				var value_attrs = parse_attributes (false);
+				var value_begin = get_location (); 
+				string id = parse_identifier ();
+				comment = scanner.pop_comment ();
 
-			var ev = new EnumValue (id, value, get_src (value_begin), comment);
-			ev.access = SymbolAccessibility.PUBLIC;
-			set_attributes (ev, value_attrs);
+				Expression value = null;
+				if (accept (TokenType.ASSIGN)) {
+					value = parse_expression ();
+				}
 
-			en.add_value (ev);
-			if (expect_separator ()) {
-				accept (TokenType.EOL);
+				var ev = new EnumValue (id, value, get_src (value_begin), comment);
+				ev.access = SymbolAccessibility.PUBLIC;
+				set_attributes (ev, value_attrs);
+
+				en.add_value (ev);
+				if (expect_separator ()) {
+					accept (TokenType.EOL);
+				}
 			}
 		} while (true);
 		
