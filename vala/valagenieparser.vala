@@ -3459,9 +3459,6 @@ public class Vala.Genie.Parser : CodeVisitor {
 			}
 			if (current () == TokenType.DEF) {
 				// enum methods
-				if ((tokens[index - 1].type != TokenType.EOL) && (tokens[index - 1].type != TokenType.DEDENT)) {
-					Report.error (get_src (get_location ()), "method definition must start from new line");
-				}
 				var en_method = parse_declaration ();
 				en.add_method (en_method as Method);
 			}
