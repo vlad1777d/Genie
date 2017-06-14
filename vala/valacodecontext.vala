@@ -408,11 +408,11 @@ public class Vala.CodeContext {
 	}
 
 	/**
-	 * Add the specified source file to the context. Only .vala, .vapi, .gs,
+	 * Add the specified source file to the context. Only .vala, .vapi, .genie, .gs
 	 * and .c extensions are supported.
 	 *
 	 * @param filename a filename
-	 * @param is_source true to force adding the file as .vala or .gs
+	 * @param is_source true to force adding the file as .vala, .genie or .gs
 	 * @param cmdline true if the file came from the command line.
 	 * @return false if the file is not recognized or the file does not exist
 	 */
@@ -423,7 +423,7 @@ public class Vala.CodeContext {
 		}
 
 		var rpath = realpath (filename);
-		if (is_source || filename.has_suffix (".vala") || filename.has_suffix (".gs")) {
+		if (is_source || filename.has_suffix (".vala") || filename.has_suffix (".genie") || filename.has_suffix (".gs")) {
 			var source_file = new SourceFile (this, SourceFileType.SOURCE, rpath, null, cmdline);
 			source_file.relative_filename = filename;
 
@@ -443,7 +443,7 @@ public class Vala.CodeContext {
 		} else if (filename.has_suffix (".h")) {
 			/* Ignore */
 		} else {
-			Report.error (null, "%s is not a supported source file type. Only .vala, .vapi, .gs, and .c files are supported.".printf (filename));
+			Report.error (null, "%s is not a supported source file type. Only .vala, .vapi, .genie, .gs, and .c files are supported.".printf (filename));
 			return false;
 		}
 

@@ -78,7 +78,7 @@ public class Vala.Genie.Parser : CodeVisitor {
 	}
 
 	/**
-	 * Parses all .gs source files in the specified code context and
+	 * Parses all .genie and .gs source files in the specified code context and
 	 * builds a code tree.
 	 *
 	 * @param context a code context
@@ -89,7 +89,7 @@ public class Vala.Genie.Parser : CodeVisitor {
 	}
 
 	public override void visit_source_file (SourceFile source_file) {
-		if (source_file.filename.has_suffix (".gs")) {
+		if (source_file.filename.has_suffix (".genie") || source_file.filename.has_suffix (".gs")) {
 			parse_file (source_file);
 		}
 	}
