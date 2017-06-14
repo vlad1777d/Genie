@@ -65,7 +65,7 @@ public class Vala.GtkModule : GSignalModule {
 				Report.error (null, "GResources file `%s' does not exist".printf (gresource));
 				continue;
 			}
-			var gresource_dir = Path.get_dirname (gresource);
+
 			MarkupReader reader = new MarkupReader (gresource);
 
 			int state = 0;
@@ -81,7 +81,7 @@ public class Vala.GtkModule : GSignalModule {
 					state = 1;
 				} else if (state == 1 && current_token == MarkupTokenType.TEXT) {
 					var name = reader.content;
-					var filename = Path.build_filename (gresource_dir, name);
+					var filename = context.get_gresource_path (gresource, name);
 					if (alias != null) {
 						gresource_to_file_map.set (Path.build_filename (prefix, alias), filename);
 					}
@@ -104,7 +104,7 @@ public class Vala.GtkModule : GSignalModule {
 		var ui_file = gresource_to_file_map.get (ui_resource);
 		if (ui_file == null || !FileUtils.test (ui_file, FileTest.EXISTS)) {
 			node.error = true;
-			Report.error (node.source_reference, "UI resource not found: `%s'. Please make sure to specify the proper GResources xml files with --gresources.".printf (ui_resource));
+			Report.error (node.source_reference, "UI resource not found: `%s'. Please make sure to specify the proper GResources xml files with --gresources and alternative search locations with --gresourcesdir.".printf (ui_resource));
 			return;
 		}
 		current_handler_to_signal_map = new HashMap<string, Signal>(str_hash, str_equal);
@@ -165,13 +165,6 @@ public class Vala.GtkModule : GSignalModule {
 			if (gtk_widget_type == null || !cl.is_subtype_of (gtk_widget_type)) {
 				if (!cl.error) {
 					Report.error (attr.source_reference, "subclassing Gtk.Widget is required for using Gtk templates");
-					cl.error = true;
-				}
-				return false;
-			}
-			if (!context.require_glib_version (2, 38)) {
-				if (!cl.error) {
-					Report.error (attr.source_reference, "glib 2.38 is required for using Gtk templates (with --target-glib=2.38)");
 					cl.error = true;
 				}
 				return false;

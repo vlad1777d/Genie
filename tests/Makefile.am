@@ -22,6 +22,7 @@ TESTS = \
 	basic-types/arrays.vala \
 	basic-types/pointers.vala \
 	basic-types/sizeof.vala \
+	basic-types/glists.vala \
 	basic-types/bug571486.vala \
 	basic-types/bug591552.vala \
 	basic-types/bug595751.vala \
@@ -43,6 +44,7 @@ TESTS = \
 	basic-types/bug756376.vala \
 	basic-types/bug761307.vala \
 	basic-types/bug771626.test \
+	basic-types/bug772426.vala \
 	basic-types/bug777697.test \
 	chainup/class-base.vala \
 	chainup/class-base-foo.vala \
@@ -160,6 +162,7 @@ TESTS = \
 	delegates/bug772204.test \
 	objects/chainup.vala \
 	objects/classes.vala \
+	objects/constructors.vala \
 	objects/generics.vala \
 	objects/fields.vala \
 	objects/interfaces.vala \
@@ -209,6 +212,7 @@ TESTS = \
 	objects/bug701978.vala \
 	objects/bug702736.vala \
 	objects/bug702846.vala \
+	objects/bug731547.vala \
 	objects/bug751338.vala \
 	objects/bug758816.vala \
 	objects/bug760031.test \
@@ -258,9 +262,11 @@ TESTS = \
 	asynchronous/bug659886.vala \
 	asynchronous/bug661961.vala \
 	asynchronous/bug710103.vala \
+	asynchronous/bug741929.vala \
 	asynchronous/bug742621.vala \
 	asynchronous/bug762819.vala \
 	asynchronous/bug777242.vala \
+	asynchronous/bug783543.vala \
 	asynchronous/closures.vala \
 	asynchronous/generator.vala \
 	asynchronous/yield.vala \
@@ -277,6 +283,7 @@ TESTS = \
 	dbus/dicts.test \
 	dbus/bug596862.vala \
 	dbus/bug602003.test \
+	dbus/bug782719.test \
 	dbus/rawvariants.test \
 	gir/bug651773.test \
 	gir/bug667751.test \

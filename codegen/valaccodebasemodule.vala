@@ -38,6 +38,7 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 		public int next_temp_var_id;
 		public bool current_method_inner_error;
 		public bool current_method_return;
+		public int next_coroutine_state = 1;
 		public Map<string,string> variable_name_map = new HashMap<string,string> (str_hash, str_equal);
 		public Map<string,int> closure_variable_count_map = new HashMap<string,int> (str_hash, str_equal);
 		public Map<LocalVariable,int> closure_variable_clash_map = new HashMap<LocalVariable,int> ();
@@ -270,7 +271,6 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 		set { emit_context.current_method_return = value; }
 	}
 
-	public int next_coroutine_state = 1;
 	int next_block_id = 0;
 	Map<Block,int> block_map = new HashMap<Block,int> ();
 
@@ -3217,14 +3217,12 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 		}
 
 		var function = new CCodeFunction (destroy_func, "void");
-		function.modifiers = CCodeModifiers.STATIC;
-
 		function.add_parameter (new CCodeParameter ("self", get_ccode_name (collection_type)));
 
 		push_function (function);
 
-		CCodeFunctionCall element_free_call;
 		if (collection_type.data_type == gnode_type) {
+			CCodeFunctionCall element_free_call;
 			/* A wrapper which converts GNodeTraverseFunc into GDestroyNotify */
 			string destroy_node_func = "%s_node".printf (destroy_func);
 			var wrapper = new CCodeFunction (destroy_node_func, "gboolean");
@@ -3250,25 +3248,29 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 			element_free_call.add_argument (new CCodeConstant ("-1"));
 			element_free_call.add_argument (new CCodeIdentifier (destroy_node_func));
 			element_free_call.add_argument (new CCodeConstant ("NULL"));
+			ccode.add_expression (element_free_call);
+
+			var cfreecall = new CCodeFunctionCall (new CCodeIdentifier (get_ccode_free_function (gnode_type)));
+			cfreecall.add_argument (new CCodeIdentifier ("self"));
+			ccode.add_expression (cfreecall);
+
+			function.modifiers = CCodeModifiers.STATIC;
 		} else {
+			CCodeFunctionCall collection_free_call;
 			if (collection_type.data_type == glist_type) {
-				element_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_list_foreach"));
+				collection_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_list_free_full"));
 			} else if (collection_type.data_type == gslist_type) {
-				element_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_slist_foreach"));
+				collection_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_slist_free_full"));
 			} else {
-				element_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_queue_foreach"));
+				collection_free_call = new CCodeFunctionCall (new CCodeIdentifier ("g_queue_free_full"));
 			}
 
-			element_free_call.add_argument (new CCodeIdentifier ("self"));
-			element_free_call.add_argument (new CCodeCastExpression (element_destroy_func_expression, "GFunc"));
-			element_free_call.add_argument (new CCodeConstant ("NULL"));
+			collection_free_call.add_argument (new CCodeIdentifier ("self"));
+			collection_free_call.add_argument (new CCodeCastExpression (element_destroy_func_expression, "GDestroyNotify"));
+			ccode.add_expression (collection_free_call);
+
+			function.modifiers = CCodeModifiers.STATIC | CCodeModifiers.INLINE;
 		}
-
-		ccode.add_expression (element_free_call);
-
-		var cfreecall = new CCodeFunctionCall (new CCodeIdentifier (get_ccode_free_function (collection_type.data_type)));
-		cfreecall.add_argument (new CCodeIdentifier ("self"));
-		ccode.add_expression (cfreecall);
 
 		pop_function ();
 
@@ -4796,7 +4798,7 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 
 			if (expr.is_yield_expression) {
 				// set state before calling async function to support immediate callbacks
-				int state = next_coroutine_state++;
+				int state = emit_context.next_coroutine_state++;
 
 				ccode.add_assignment (new CCodeMemberAccess.pointer (new CCodeIdentifier ("_data_"), "_state_"), new CCodeConstant (state.to_string ()));
 				ccode.add_expression (async_call);
@@ -6137,6 +6139,8 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 			}
 			if (sym is Delegate) {
 				return "%s%s%s".printf (get_ccode_lower_case_prefix (sym.parent_symbol), infix, Symbol.camel_case_to_lower_case (sym.name));
+			} else if (sym is Signal) {
+				return get_ccode_attribute (sym).name.replace ("-", "_");
 			} else if (sym is ErrorCode) {
 				return get_ccode_name (sym).down ();
 			} else {
@@ -6469,7 +6473,7 @@ public abstract class Vala.CCodeBaseModule : CodeGenerator {
 	}
 
 	public CCodeConstant get_signal_canonical_constant (Signal sig, string? detail = null) {
-		return new CCodeConstant ("\"%s%s\"".printf (get_ccode_name (sig).replace ("_", "-"), (detail != null ? "::%s".printf (detail) : "")));
+		return new CCodeConstant ("\"%s%s\"".printf (get_ccode_name (sig), (detail != null ? "::%s".printf (detail) : "")));
 	}
 
 	public static CCodeConstant get_enum_value_canonical_cconstant (EnumValue ev) {

@@ -691,6 +691,8 @@ namespace GLib {
 		public string guid { get; construct; }
 		public GLib.IOStream stream { get; construct; }
 		public string unique_name { get; }
+		[CCode (cname = "closed")]
+		public signal void on_closed (bool remote_peer_vanished, GLib.Error? error);
 	}
 	[CCode (cheader_filename = "gio/gio.h", ref_function = "g_dbus_interface_info_ref", type_id = "g_dbus_interface_info_get_type ()", unref_function = "g_dbus_interface_info_unref")]
 	[Compact]
@@ -1076,9 +1078,9 @@ namespace GLib {
 		[Version (since = "2.20")]
 		public async string? read_line_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null, out size_t length = null) throws GLib.IOError, GLib.IOError;
 		[Version (since = "2.30")]
-		public string? read_line_utf8 (out size_t length, GLib.Cancellable? cancellable = null) throws GLib.IOError;
+		public string? read_line_utf8 (out size_t length = null, GLib.Cancellable? cancellable = null) throws GLib.IOError;
 		[CCode (cname = "g_data_input_stream_read_line_async", finish_function = "g_data_input_stream_read_line_finish_utf8")]
-		public async string? read_line_utf8_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null, out size_t length) throws GLib.IOError, GLib.IOError;
+		public async string? read_line_utf8_async (int io_priority = GLib.Priority.DEFAULT, GLib.Cancellable? cancellable = null, out size_t length = null) throws GLib.IOError;
 		public uint16 read_uint16 (GLib.Cancellable? cancellable = null) throws GLib.IOError;
 		public uint32 read_uint32 (GLib.Cancellable? cancellable = null) throws GLib.IOError;
 		public uint64 read_uint64 (GLib.Cancellable? cancellable = null) throws GLib.IOError;

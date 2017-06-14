@@ -91,6 +91,7 @@ DataInputStream
   .read_* throws="GLib.IOError"
   .read_line* nullable
   .read_line_finish_utf8 skip
+  .read_line_utf8.length default=null
 DataOutputStream
   .put_* throws="GLib.IOError"
 DBusAuthObserver.authorize_authenticated_peer virtual
@@ -316,6 +317,10 @@ tls_* skip
 AsyncInitable
   .new* skip
   .init_async#virtual_method virtual
+
+// Bug #684358: GDBusConnection `closed` signal conficts with property
+DBusConnection
+  .closed#signal name="on_closed"
 
 // Bug #666797: No support for generic methods in GIR parser
 DBusConnection

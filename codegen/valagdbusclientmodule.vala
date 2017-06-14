@@ -407,7 +407,7 @@ public class Vala.GDBusClientModule : GDBusModule {
 
 		if (bus_get_proxy_async || conn_get_proxy_async) {
 			if (expr.is_yield_expression) {
-				int state = next_coroutine_state++;
+				int state = emit_context.next_coroutine_state++;
 
 				ccode.add_assignment (new CCodeMemberAccess.pointer (new CCodeIdentifier ("_data_"), "_state_"), new CCodeConstant (state.to_string ()));
 				ccode.add_expression (ccall);
@@ -436,7 +436,7 @@ public class Vala.GDBusClientModule : GDBusModule {
 	}
 
 	string generate_dbus_signal_handler (Signal sig, ObjectTypeSymbol sym) {
-		string wrapper_name = "_dbus_handle_%s_%s".printf (get_ccode_lower_case_name (sym), get_ccode_name (sig));
+		string wrapper_name = "_dbus_handle_%s_%s".printf (get_ccode_lower_case_name (sym), get_ccode_lower_case_name (sig));
 
 		var function = new CCodeFunction (wrapper_name);
 		function.modifiers = CCodeModifiers.STATIC;
@@ -706,21 +706,12 @@ public class Vala.GDBusClientModule : GDBusModule {
 				CCodeFunctionCall res_wrapper = null;
 
 				// use wrapper as source_object wouldn't be correct otherwise
-				if (context.require_glib_version (2, 36)) {
-					ccall.add_argument (new CCodeIdentifier (generate_async_callback_wrapper ()));
-					res_wrapper = new CCodeFunctionCall (new CCodeIdentifier ("g_task_new"));
-					res_wrapper.add_argument (new CCodeCastExpression (new CCodeIdentifier ("self"), "GObject *"));
-					res_wrapper.add_argument (new CCodeConstant ("NULL"));
-					res_wrapper.add_argument (new CCodeIdentifier ("_callback_"));
-					res_wrapper.add_argument (new CCodeIdentifier ("_user_data_"));
-				} else {
-					ccall.add_argument (new CCodeIdentifier (generate_async_callback_wrapper ()));
-					res_wrapper = new CCodeFunctionCall (new CCodeIdentifier ("g_simple_async_result_new"));
-					res_wrapper.add_argument (new CCodeCastExpression (new CCodeIdentifier ("self"), "GObject *"));
-					res_wrapper.add_argument (new CCodeIdentifier ("_callback_"));
-					res_wrapper.add_argument (new CCodeIdentifier ("_user_data_"));
-					res_wrapper.add_argument (new CCodeConstant ("NULL"));
-				}
+				ccall.add_argument (new CCodeIdentifier (generate_async_callback_wrapper ()));
+				res_wrapper = new CCodeFunctionCall (new CCodeIdentifier ("g_task_new"));
+				res_wrapper.add_argument (new CCodeCastExpression (new CCodeIdentifier ("self"), "GObject *"));
+				res_wrapper.add_argument (new CCodeConstant ("NULL"));
+				res_wrapper.add_argument (new CCodeIdentifier ("_callback_"));
+				res_wrapper.add_argument (new CCodeIdentifier ("_user_data_"));
 				ccall.add_argument (res_wrapper);
 
 				ccode.add_expression (ccall);
@@ -736,30 +727,21 @@ public class Vala.GDBusClientModule : GDBusModule {
 			ccall.add_argument (connection);
 
 			// unwrap async result
-			if (context.require_glib_version (2, 36)) {
-				ccode.add_declaration ("GAsyncResult", new CCodeVariableDeclarator ("*_inner_res"));
+			ccode.add_declaration ("GAsyncResult", new CCodeVariableDeclarator ("*_inner_res"));
 
-				var inner_res = new CCodeFunctionCall (new CCodeIdentifier ("g_task_propagate_pointer"));
-				inner_res.add_argument (new CCodeCastExpression (new CCodeIdentifier ("_res_"), "GTask *"));
-				inner_res.add_argument (new CCodeConstant ("NULL"));
-				ccode.add_assignment (new CCodeIdentifier ("_inner_res"), inner_res);
+			var inner_res = new CCodeFunctionCall (new CCodeIdentifier ("g_task_propagate_pointer"));
+			inner_res.add_argument (new CCodeCastExpression (new CCodeIdentifier ("_res_"), "GTask *"));
+			inner_res.add_argument (new CCodeConstant ("NULL"));
+			ccode.add_assignment (new CCodeIdentifier ("_inner_res"), inner_res);
 
-				ccall.add_argument (new CCodeIdentifier ("_inner_res"));
-				ccall.add_argument (error_argument);
-				ccode.add_assignment (new CCodeIdentifier ("_reply_message"), ccall);
+			ccall.add_argument (new CCodeIdentifier ("_inner_res"));
+			ccall.add_argument (error_argument);
+			ccode.add_assignment (new CCodeIdentifier ("_reply_message"), ccall);
 
-				// _inner_res is guaranteed to be non-NULL, so just unref it
-				var unref_inner_res = new CCodeFunctionCall (new CCodeIdentifier ("g_object_unref"));
-				unref_inner_res.add_argument (new CCodeIdentifier ("_inner_res"));
-				ccode.add_expression (unref_inner_res);
-			} else {
-				var inner_res = new CCodeFunctionCall (new CCodeIdentifier ("g_simple_async_result_get_op_res_gpointer"));
-				inner_res.add_argument (new CCodeCastExpression (new CCodeIdentifier ("_res_"), "GSimpleAsyncResult *"));
-				ccall.add_argument (inner_res);
-
-				ccall.add_argument (error_argument);
-				ccode.add_assignment (new CCodeIdentifier ("_reply_message"), ccall);
-			}
+			// _inner_res is guaranteed to be non-NULL, so just unref it
+			var unref_inner_res = new CCodeFunctionCall (new CCodeIdentifier ("g_object_unref"));
+			unref_inner_res.add_argument (new CCodeIdentifier ("_inner_res"));
+			ccode.add_expression (unref_inner_res);
 		}
 
 		if (call_type == CallType.SYNC || call_type == CallType.FINISH) {

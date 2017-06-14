@@ -660,6 +660,10 @@ namespace Atk {
 		DESCRIBED_BY,
 		DESCRIPTION_FOR,
 		NODE_PARENT_OF,
+		DETAILS,
+		DETAILS_FOR,
+		ERROR_MESSAGE,
+		ERROR_FOR,
 		LAST_DEFINED;
 		[CCode (cheader_filename = "atk/atk.h")]
 		public static Atk.RelationType for_name (string name);
@@ -795,6 +799,7 @@ namespace Atk {
 		MATH_ROOT,
 		SUBSCRIPT,
 		SUPERSCRIPT,
+		FOOTNOTE,
 		LAST_DEFINED;
 		[CCode (cheader_filename = "atk/atk.h")]
 		public static Atk.Role for_name (string name);

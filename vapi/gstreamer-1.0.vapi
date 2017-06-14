@@ -649,6 +649,8 @@ namespace Gst {
 		public unowned Gst.ParentBufferMeta? add_parent_buffer_meta (Gst.Buffer @ref);
 		[Version (since = "1.6")]
 		public unowned Gst.ProtectionMeta? add_protection_meta (owned Gst.Structure info);
+		[Version (since = "1.14")]
+		public unowned Gst.ReferenceTimestampMeta? add_reference_timestamp_meta (Gst.Caps reference, Gst.ClockTime timestamp, Gst.ClockTime duration);
 		[CCode (has_construct_function = false)]
 		public Buffer.allocate (Gst.Allocator? allocator, size_t size, Gst.AllocationParams? @params);
 		public Gst.Buffer append (owned Gst.Buffer buf2);
@@ -673,6 +675,8 @@ namespace Gst {
 		public Gst.Memory get_memory (uint idx);
 		public Gst.Memory get_memory_range (uint idx, int length);
 		public unowned Gst.Meta? get_meta (GLib.Type api);
+		[Version (since = "1.14")]
+		public unowned Gst.ReferenceTimestampMeta? get_reference_timestamp_meta (Gst.Caps? reference);
 		public size_t get_size ();
 		public size_t get_sizes (out size_t offset, out size_t maxsize);
 		public size_t get_sizes_range (uint idx, int length, out size_t offset, out size_t maxsize);
@@ -777,6 +781,8 @@ namespace Gst {
 		public GLib.Source create_watch ();
 		public void disable_sync_message_emission ();
 		public void enable_sync_message_emission ();
+		[Version (since = "1.14")]
+		public void get_pollfd (GLib.PollFD fd);
 		public bool have_pending ();
 		public Gst.Message? peek ();
 		public Gst.Message? poll (Gst.MessageType events, Gst.ClockTime timeout);
@@ -1111,7 +1117,7 @@ namespace Gst {
 		[CCode (cname = "gst_device_provider_class_add_static_metadata")]
 		public class void add_static_metadata (string key, owned string value);
 		public bool can_monitor ();
-		public void device_add (owned Gst.Device device);
+		public void device_add (Gst.Device device);
 		public void device_remove (Gst.Device device);
 		public Gst.Bus get_bus ();
 		public GLib.List<Gst.Device> get_devices ();
@@ -1191,7 +1197,7 @@ namespace Gst {
 		public class void add_metadata (string key, string value);
 		public bool add_pad (Gst.Pad pad);
 		[CCode (cname = "gst_element_class_add_pad_template")]
-		public class void add_pad_template (owned Gst.PadTemplate templ);
+		public class void add_pad_template (Gst.PadTemplate templ);
 		[Version (since = "1.10")]
 		public ulong add_property_deep_notify_watch (string? property_name, bool include_value);
 		[Version (since = "1.10")]
@@ -1707,18 +1713,17 @@ namespace Gst {
 		public GLib.Mutex @lock;
 		[CCode (has_construct_function = false)]
 		protected Object ();
-		public bool add_control_binding (owned Gst.ControlBinding binding);
+		public bool add_control_binding (Gst.ControlBinding binding);
 		public static bool check_uniqueness (GLib.List<Gst.Object> list, string name);
 		public static void default_deep_notify (GLib.Object object, Gst.Object orig, GLib.ParamSpec pspec, [CCode (array_length = false, array_null_terminated = true)] string[]? excluded_props);
 		public void default_error (GLib.Error error, string? debug);
 		public Gst.ControlBinding? get_control_binding (string property_name);
 		public Gst.ClockTime get_control_rate ();
-		public bool get_g_value_array (string property_name, Gst.ClockTime timestamp, Gst.ClockTime interval, uint n_values, GLib.Value values);
+		public bool get_g_value_array (string property_name, Gst.ClockTime timestamp, Gst.ClockTime interval, [CCode (array_length_cname = "n_values", array_length_pos = 3.5, array_length_type = "guint")] GLib.Value[] values);
 		public string? get_name ();
 		public Gst.Object? get_parent ();
 		public string get_path_string ();
 		public GLib.Value? get_value (string property_name, Gst.ClockTime timestamp);
-		public bool get_value_array (string property_name, Gst.ClockTime timestamp, Gst.ClockTime interval, uint n_values, void* values);
 		public bool has_active_control_bindings ();
 		[Version (deprecated = true)]
 		public bool has_ancestor (Gst.Object ancestor);
@@ -1895,6 +1900,7 @@ namespace Gst {
 	public class ParseContext {
 		[CCode (has_construct_function = false)]
 		public ParseContext ();
+		public Gst.ParseContext copy ();
 		public void free ();
 		[CCode (array_length = false, array_null_terminated = true)]
 		public string[] get_missing_elements ();
@@ -2118,8 +2124,8 @@ namespace Gst {
 	public class Registry : Gst.Object {
 		[CCode (has_construct_function = false)]
 		protected Registry ();
-		public bool add_feature (owned Gst.PluginFeature feature);
-		public bool add_plugin (owned Gst.Plugin plugin);
+		public bool add_feature (Gst.PluginFeature feature);
+		public bool add_plugin (Gst.Plugin plugin);
 		public bool check_feature_version (string feature_name, uint min_major, uint min_minor, uint min_micro);
 		public GLib.List<Gst.PluginFeature> feature_filter ([CCode (delegate_target_pos = 2.1)] Gst.PluginFeatureFilter filter, bool first);
 		public Gst.PluginFeature? find_feature (string name, GLib.Type type);
@@ -2809,6 +2815,16 @@ namespace Gst {
 		public static unowned Gst.MetaInfo? get_info ();
 	}
 	[CCode (cheader_filename = "gst/gst.h", has_type_id = false)]
+	[Version (since = "1.14")]
+	public struct ReferenceTimestampMeta {
+		public Gst.Meta parent;
+		public weak Gst.Caps reference;
+		public Gst.ClockTime timestamp;
+		public Gst.ClockTime duration;
+		public static GLib.Type api_get_type ();
+		public static unowned Gst.MetaInfo? get_info ();
+	}
+	[CCode (cheader_filename = "gst/gst.h", has_type_id = false)]
 	public struct StaticCaps {
 		public weak Gst.Caps caps;
 		public weak global::string string;
@@ -2822,7 +2838,7 @@ namespace Gst {
 		public Gst.PadDirection direction;
 		public Gst.PadPresence presence;
 		public Gst.StaticCaps static_caps;
-		public Gst.PadTemplate @get ();
+		public unowned Gst.PadTemplate @get ();
 		public Gst.Caps get_caps ();
 		public static GLib.Type get_type ();
 	}
@@ -3951,7 +3967,7 @@ namespace Gst {
 	public static bool preset_set_app_dir (string app_dir);
 	[CCode (cheader_filename = "gst/gst.h")]
 	[Version (since = "1.6")]
-	public static unowned string protection_select_system (string system_identifiers);
+	public static unowned string protection_select_system ([CCode (array_length = false, array_null_terminated = true)] string[] system_identifiers);
 	[CCode (cheader_filename = "gst/gst.h")]
 	public static bool segtrap_is_enabled ();
 	[CCode (cheader_filename = "gst/gst.h")]
