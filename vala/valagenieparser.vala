@@ -2637,6 +2637,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 			return parse_interface_declaration (attrs);		
 		case TokenType.NAMESPACE:	
 			return parse_namespace_declaration (attrs);	
+		case TokenType.PASS:
+			return parse_symbol_name ();
 		case TokenType.PROP:	
 			return parse_property_declaration (attrs);
 		case TokenType.EVENT:	
@@ -2806,6 +2808,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 			ns.add_field (field);
 		} else if (sym is Constant) {
 			ns.add_constant ((Constant) sym);
+		} else if (sym is UnresolvedSymbol) {
+			next ();
 		} else {
 			Report.error (sym.source_reference, "unexpected declaration in namespace");
 		}
