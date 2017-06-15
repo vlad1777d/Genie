@@ -2407,7 +2407,7 @@ public class Vala.Genie.Parser : CodeVisitor {
 		
 		switch (current ()) {
 		case TokenType.CONST:
-			return parse_constant_declaration (attrs);	
+			return parse_constant_declaration (attrs);
 		case TokenType.CONSTRUCT:
 			return parse_creation_method_declaration (attrs);
 		case TokenType.CLASS:
@@ -2418,8 +2418,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 			}
 			rollback (begin);
 			return parse_constructor_declaration (attrs);
-		case TokenType.DELEGATE:	
-			return parse_delegate_declaration (attrs);	
+		case TokenType.DELEGATE:
+			return parse_delegate_declaration (attrs);
 		case TokenType.DEF:
 			return parse_method_declaration (attrs);
 		case TokenType.ENUM:
@@ -2428,10 +2428,12 @@ public class Vala.Genie.Parser : CodeVisitor {
 			return parse_errordomain_declaration (attrs);
 		case TokenType.FINAL:
 			return parse_destructor_declaration (attrs);
-		case TokenType.INTERFACE:	
-			return parse_interface_declaration (attrs);		
-		case TokenType.NAMESPACE:	
-			return parse_namespace_declaration (attrs);	
+		case TokenType.INTERFACE:
+			return parse_interface_declaration (attrs);
+		case TokenType.NAMESPACE:
+			return parse_namespace_declaration (attrs);
+		case TokenType.PASS:
+			return parse_symbol_name ();
 		case TokenType.PROP:	
 			return parse_property_declaration (attrs);
 		case TokenType.EVENT:	
@@ -2770,6 +2772,8 @@ public class Vala.Genie.Parser : CodeVisitor {
 				cl.destructor = (Destructor) d;
 			}
 
+		} else if (sym is UnresolvedSymbol) {
+			next ();
 		} else {
 			Report.error (sym.source_reference, "unexpected declaration in class");
 		}
